@@ -1,0 +1,18 @@
+@host = http://sgn30C6F7293C48
+
+
+GET {{host}}/message
+
+###
+
+POST {{host}}/message
+
+Marry had a little lamb
+
+###
+POST {{host}}/message
+
+Another Test 
+
+###
+POST {{host}}/message
