@@ -10,6 +10,44 @@
 #include <NetBIOS.h>
 
 
+/* Pinout RGB Matrix (6124 chip)
+   https://www.amazon.com/dp/B079JSKF21?psc=1&ref=ppx_yo2ov_dt_b_product_details
+
+HUB75E pinout
+R1 | G1        1 | 2
+B1 | GND       3 | 4
+R2 | G2        5 | 6
+B2 | E         7 | 8
+ A | B         9 | 10
+ C | D        11 | 12
+CLK| LAT      13 | 14
+OE | GND      15 | 16
+*/ 
+
+/* ESP32 Mini Pinout (wemos_d1_mini32)
+
+RGB             ESP32
+Matrix          Mini
+------          -----------
+
+ 1-R1            25
+ 2-G1            26
+ 3-B1            27
+ 4-GND           GND
+ 5-R2            14
+ 6-G2            12
+ 7-B2            13
+ 8-E             NC  // used if using two panels or 64x64 panels with 1/32 scan
+ 9-A             23
+10-B             19
+11-C             5
+12-D             17
+13-CLK           16
+14-LAT           4
+15-OE            15
+16-GND           GND
+*/
+
 // Set web server port number to 80
 WebServer server(80);
 
@@ -39,7 +77,8 @@ uint16_t myGREEN = dma_display->color565(0, 255, 0);
 uint16_t myBLUE = dma_display->color565(0, 0, 255);
 
 int currentColor = 0;
-uint16_t colors[5] = 
+const int colorCount = 5;
+uint16_t colors[colorCount] = 
 {
   dma_display->color565(255, 0, 0),     // Red
   dma_display->color565(0, 0, 255),     // Blue
@@ -167,11 +206,17 @@ void loop() {
     dma_display->flipDMABuffer();
   }
 
-  if (checkNewMessage)
+  if (checkNewMessage || (message.length() == 0 && newMessage.length() != 0))
   {
+    if (message.length() == 0)
+      textXPosition = dma_display->width();
+
     checkNewMessage = false;
-    if (currentColor >=4 ) currentColor = -1;
-    dma_display->setTextColor(colors[++currentColor]);
+    dma_display->setTextColor(colors[currentColor++]);
+    
+    if (currentColor >= colorCount-1 ) 
+      currentColor = 0;
+    
     if (message != newMessage)
       message = newMessage;
   }
