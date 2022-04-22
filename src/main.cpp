@@ -9,6 +9,7 @@
 #include <WiFiManager.h>
 #include <NetBIOS.h>
 
+#define SERIAL_DEBUG 1
 
 /* Pinout RGB Matrix (6124 chip)
    https://www.amazon.com/dp/B079JSKF21?psc=1&ref=ppx_yo2ov_dt_b_product_details
@@ -24,29 +25,23 @@ CLK| LAT      13 | 14
 OE | GND      15 | 16
 */ 
 
-/* ESP32 Mini Pinout (wemos_d1_mini32)
 
-RGB             ESP32
-Matrix          Mini
-------          -----------
+// Pinout for KiCad Adapter
+#define R1_PIN 27
+#define G1_PIN 22
+#define B1_PIN 25
+#define R2_PIN 32
+#define G2_PIN 21
+#define B2_PIN 12
+#define CH_A_PIN 10 //34 
+#define CH_B_PIN 16
+#define CH_C_PIN 33
+#define CH_D_PIN 18
+#define CH_E_PIN -1 // assign to any available pin if using two panels or 64x64 panels with 1/32 scan
+#define CLK_PIN 13 //35
+#define LAT_PIN 26
+#define OE_PIN 14 //39
 
- 1-R1            25
- 2-G1            26
- 3-B1            27
- 4-GND           GND
- 5-R2            14
- 6-G2            12
- 7-B2            13
- 8-E             NC  // used if using two panels or 64x64 panels with 1/32 scan
- 9-A             23
-10-B             19
-11-C             5
-12-D             17
-13-CLK           16
-14-LAT           4
-15-OE            15
-16-GND           GND
-*/
 
 // Set web server port number to 80
 WebServer server(80);
@@ -105,22 +100,43 @@ void handlePostMessage() {
 
 void setup() {
   Serial.begin(115200);
-
+  // HUB75_I2S_CFG::i2s_pins _pins={R1_PIN, G1_PIN, B1_PIN, R2_PIN, G2_PIN, B2_PIN, CH_A_PIN, CH_B_PIN, CH_C_PIN, CH_D_PIN, CH_E_PIN, LAT_PIN, OE_PIN, CLK_PIN};
+  // HUB75_I2S_CFG mxconfig(
+  //   PANEL_RES_X,   // module width
+  //   PANEL_RES_Y,   // module height
+  //   PANEL_CHAIN,    // Chain length
+  //   _pins // pin mapping
+  // );
   HUB75_I2S_CFG mxconfig(
     PANEL_RES_X,   // module width
     PANEL_RES_Y,   // module height
     PANEL_CHAIN    // Chain length
-  
   );
+  mxconfig.gpio.r1= R1_PIN;
+  mxconfig.gpio.g1 = G1_PIN;
+  mxconfig.gpio.b1 = B1_PIN;
+  mxconfig.gpio.r2 = R2_PIN;
+  mxconfig.gpio.g2 = G2_PIN;
+  mxconfig.gpio.b2 = B2_PIN;
+  mxconfig.gpio.a = CH_A_PIN;
+  mxconfig.gpio.b = CH_B_PIN;
+  mxconfig.gpio.c = CH_C_PIN;
+  mxconfig.gpio.d = CH_D_PIN;
+  mxconfig.gpio.e = CH_E_PIN;
+  mxconfig.gpio.lat = LAT_PIN;
+  mxconfig.gpio.oe = OE_PIN;
+  mxconfig.gpio.clk = CLK_PIN;
   mxconfig.double_buff = true;
-  mxconfig.clkphase = true;
+
+  
 
   // Display Setup
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
   Serial.println("Set Brightness");
   dma_display->setBrightness8(90); //0-255
   Serial.println("Begin");
-  dma_display->begin();
+  if( not dma_display->begin() )
+      Serial.println("****** I2S memory allocation failed ***********");
   Serial.println("Clear Screen");
   dma_display->clearScreen();
 
