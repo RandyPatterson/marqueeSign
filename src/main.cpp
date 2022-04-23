@@ -33,14 +33,14 @@ OE | GND      15 | 16
 #define R2_PIN 32
 #define G2_PIN 21
 #define B2_PIN 12
-#define CH_A_PIN 10 //34 
+#define CH_A_PIN 13
 #define CH_B_PIN 16
-#define CH_C_PIN 33
+#define CH_C_PIN 10
 #define CH_D_PIN 18
 #define CH_E_PIN -1 // assign to any available pin if using two panels or 64x64 panels with 1/32 scan
-#define CLK_PIN 13 //35
+#define CLK_PIN 14 
 #define LAT_PIN 26
-#define OE_PIN 14 //39
+#define OE_PIN 33 
 
 
 // Set web server port number to 80

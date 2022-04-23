@@ -1,4 +1,5 @@
-@host = http://sgn30C6F7293C48
+# @host = http://sgn30C6F7293C48
+@host = http://sgn30C6F729C9A0
 
 
 GET {{host}}/message
@@ -12,8 +13,7 @@ Marry had a little lamb
 ###
 POST {{host}}/message
 
-Another Test 
+Dinner is Ready
 
 ###
 POST {{host}}/message
-
