@@ -103,7 +103,7 @@
         "allow_blind_buried_vias": false,
         "allow_microvias": false,
         "max_error": 0.005,
-        "min_clearance": 0.6,
+        "min_clearance": 0.5499999999999999,
         "min_copper_edge_clearance": 0.0,
         "min_hole_clearance": 0.25,
         "min_hole_to_hole": 0.25,
@@ -120,6 +120,7 @@
       },
       "track_widths": [
         0.0,
+        0.3,
         0.5,
         0.8
       ],
@@ -352,7 +353,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "MatrixDisplay.kicad_pro",
+    "filename": "_autosave-MatrixDisplay.kicad_pro",
     "version": 1
   },
   "net_settings": {

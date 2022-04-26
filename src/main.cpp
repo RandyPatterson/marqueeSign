@@ -8,6 +8,8 @@
 #include <WebServer.h>
 #include <WiFiManager.h>
 #include <NetBIOS.h>
+#include <Fonts/Org_01.h>
+
 
 #define SERIAL_DEBUG 1
 
@@ -75,10 +77,10 @@ int currentColor = 0;
 const int colorCount = 5;
 uint16_t colors[colorCount] = 
 {
+  dma_display->color565(255, 255, 255), // White
   dma_display->color565(255, 0, 0),     // Red
   dma_display->color565(0, 0, 255),     // Blue
   dma_display->color565(0, 255, 0),     // Green
-  dma_display->color565(255, 255, 255), // White
   dma_display->color565(238, 130, 238)  // Purple
 
 };
@@ -97,21 +99,13 @@ void handlePostMessage() {
 
 }
 
-
-void setup() {
-  Serial.begin(115200);
-  // HUB75_I2S_CFG::i2s_pins _pins={R1_PIN, G1_PIN, B1_PIN, R2_PIN, G2_PIN, B2_PIN, CH_A_PIN, CH_B_PIN, CH_C_PIN, CH_D_PIN, CH_E_PIN, LAT_PIN, OE_PIN, CLK_PIN};
-  // HUB75_I2S_CFG mxconfig(
-  //   PANEL_RES_X,   // module width
-  //   PANEL_RES_Y,   // module height
-  //   PANEL_CHAIN,    // Chain length
-  //   _pins // pin mapping
-  // );
-  HUB75_I2S_CFG mxconfig(
+void configPanel(){
+    HUB75_I2S_CFG mxconfig(
     PANEL_RES_X,   // module width
     PANEL_RES_Y,   // module height
     PANEL_CHAIN    // Chain length
   );
+  //Map pins for adapter. Pins are changed for easier PCB trace routing
   mxconfig.gpio.r1= R1_PIN;
   mxconfig.gpio.g1 = G1_PIN;
   mxconfig.gpio.b1 = B1_PIN;
@@ -127,31 +121,55 @@ void setup() {
   mxconfig.gpio.oe = OE_PIN;
   mxconfig.gpio.clk = CLK_PIN;
   mxconfig.double_buff = true;
-
-  
-
   // Display Setup
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
-  Serial.println("Set Brightness");
   dma_display->setBrightness8(90); //0-255
-  Serial.println("Begin");
   if( not dma_display->begin() )
       Serial.println("****** I2S memory allocation failed ***********");
-  Serial.println("Clear Screen");
   dma_display->clearScreen();
+}
 
-  //connect wifi
-  dma_display->setTextSize(1);
-  dma_display->setTextWrap(true); 
-  dma_display->setTextColor(myWHITE); 
-  dma_display->setCursor(1,1);
-  dma_display->print("Connecting");
+void configWebServer() {
+  //setup api
+  server.on("/message",HTTP_POST,handlePostMessage);
+  server.on("/message", handleGetMessage);
+  server.begin();
+}
 
+// Called when config mode launched
+void configModeCallback(WiFiManager *myWiFiManager)
+{
+  dma_display->clearScreen();
+  dma_display->setCursor(1,5);
+  dma_display->print("Connect To");
+  dma_display->setCursor(1,12);
+  dma_display->print(myWiFiManager->getConfigPortalSSID());
+  dma_display->setCursor(1,19);
+  dma_display->print(WiFi.softAPIP());
+  
+}
+
+void setSaveConfigCallback(WiFiManager *myWiFiManager) 
+{
+  dma_display->setCursor(1,26);
+  dma_display->print("Saving Configuration");
+
+}
+
+String connectWiFi() {
   WiFi.mode(WIFI_STA); 
   WiFiManager wm;
   bool res;
+
+  //Debug
+  //wm.resetSettings();
+  
+  // Set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
+  wm.setAPCallback(configModeCallback);  
+
   // res = wm.autoConnect(); // auto generated AP name from chipid
-  res = wm.autoConnect("LedSign"); // anonymous ap
+  res = wm.autoConnect("Marquee"); // anonymous ap
+
 
   if(!res) {
       Serial.println("Failed to connect");
@@ -159,22 +177,46 @@ void setup() {
       dma_display->print("Failed to connect");
       ESP.restart();
   } 
-  dma_display->clearScreen();
- // Print local IP address and start web server
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
   String netbiosName = "sgn" + WiFi.macAddress();
   netbiosName.replace(":","");
-  WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+
+
+   // Print local IP address and start web server
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  
+
   WiFi.setHostname(netbiosName.c_str());
-  Serial.println("NETBIOS Name: ");
+  Serial.print("NETBIOS Name: ");
   Serial.println(netbiosName);
   NBNS.begin(netbiosName.c_str());
 
-  //configure display for scrolling text
+  return WiFi.localIP().toString();;
+  
 
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  configPanel();
+  
+  //connect wifi
+  dma_display->setFont(&Org_01);
+  dma_display->setTextSize(1);
+  dma_display->setTextColor(myWHITE); 
+  dma_display->setCursor(1,1);
+  dma_display->print("Connecting");
+
+  String netboisName  = connectWiFi();
+  message = "http://"+netboisName;
+ 
+
+  //configure display for scrolling text
+  dma_display->clearScreen();
+  dma_display->setFont(); 
   dma_display->setTextSize(FONT_SIZE);
   dma_display->setTextWrap(false); 
   dma_display->setTextColor(colors[currentColor]);
@@ -182,10 +224,7 @@ void setup() {
   textYPosition = dma_display->height() / 2 - (FONT_SIZE * 8 / 2); // This will center the text
 
 
-  //setup api
-  server.on("/message",HTTP_POST,handlePostMessage);
-  server.on("/message", handleGetMessage);
-  server.begin();
+  configWebServer();
 
 }
 
@@ -222,6 +261,8 @@ void loop() {
     dma_display->flipDMABuffer();
   }
 
+  //Set new message text if the current message scrolled off screen OR set immediately if current
+  //message is empty
   if (checkNewMessage || (message.length() == 0 && newMessage.length() != 0))
   {
     if (message.length() == 0)
