@@ -207,7 +207,7 @@ void setup() {
   dma_display->setFont(&Org_01);
   dma_display->setTextSize(1);
   dma_display->setTextColor(myWHITE); 
-  dma_display->setCursor(1,1);
+  dma_display->setCursor(1,7);
   dma_display->print("Connecting");
 
   String netboisName  = connectWiFi();
