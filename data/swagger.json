@@ -1,0 +1,58 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Scrolling Text Marguee",
+    "version": "1.0.0",
+    "title": "Marguee"
+  },
+  "tags": [
+    {
+      "name": "Message",
+      "description": "Get or Set the scrolling text"
+    }
+  ],
+  "paths": {
+    "/message": {
+      "get": {
+        "summary": "Get Current Message",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "summary": "Set Next Message Text",
+        "consumes" : [
+            "application/x-www-form-urlencoded"
+        ],
+        "produces" : [
+            "text/plain"
+        ],
+        "parameters": [
+          {
+            "name": "message",
+            "in" : "formData",
+            "required" : false,
+            "type" : "string"
+            
+          }          
+        ],
+        "requestBody": {
+          "desciption": "text to display on marguee",
+          "required": false,
+          "content": {
+            "text/plain": {
+              "type": "string"
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "successful"
+          }
+        }
+      }
+    }
+  }
+}

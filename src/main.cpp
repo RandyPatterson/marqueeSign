@@ -1,6 +1,10 @@
 // Inspired by  https://github.com/witnessmenow/ScrollingLEDMatrixTelegram
 // Youtube https://www.youtube.com/watch?v=ngrVccEU4e4&t=43s
 
+// How to amnually add swagger/openapi
+// https://techtutorialsx.com/2017/05/28/esp8266-adding-swagger-ui-to-rest-api/
+
+
 #include <Arduino.h>
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 #include <WiFi.h>
@@ -9,7 +13,7 @@
 #include <WiFiManager.h>
 #include <NetBIOS.h>
 #include <Fonts/Org_01.h>
-
+#include <SPIFFS.h>
 
 #define SERIAL_DEBUG 1
 
@@ -130,9 +134,16 @@ void configPanel(){
 }
 
 void configWebServer() {
+  
+  // //CORS Header for swagger
+  server.sendHeader("Access-Control-Allow-Origin",  "*");
+  server.sendHeader("Access-Control-Max-Age", "600");
+  server.sendHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
   //setup api
   server.on("/message",HTTP_POST,handlePostMessage);
   server.on("/message", handleGetMessage);
+  server.serveStatic("/", SPIFFS, "/swaggerui.html");
+  server.serveStatic("/swagger.json", SPIFFS, "/swagger.json");
   server.begin();
 }
 
@@ -167,7 +178,6 @@ String connectWiFi() {
   // Set callback that gets called when connecting to previous WiFi fails, and enters Access Point mode
   wm.setAPCallback(configModeCallback);  
 
-  // res = wm.autoConnect(); // auto generated AP name from chipid
   res = wm.autoConnect("Marquee"); // anonymous ap
 
 
@@ -202,6 +212,9 @@ String connectWiFi() {
 void setup() {
   Serial.begin(115200);
   configPanel();
+
+  //init file system
+  SPIFFS.begin(true);
   
   //connect wifi
   dma_display->setFont(&Org_01);
