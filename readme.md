@@ -1,9 +1,9 @@
 # Scrolling Text Sign
 WiFi Connected Marquee Sign.  
-![Display](.\content\matrixdisplay.jpg)
+![Display](./content/matrixdisplay.jpg)
 
 Connections
-![Connections](.\content\connections.jpg)
+![Connections](./content/connections.jpg)
 
 Uses this P3 Led Panel on [Amazon](https://www.amazon.com/gp/product/B079JSKF21/ref=ppx_yo_dt_b_asin_title_o09_s00?ie=UTF8&psc=1)
 ## Content
