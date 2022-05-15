@@ -1,4 +1,4 @@
-@host = http://sgn30C6F729C9A0
+@host = http://192.168.10.132
 
 
 GET {{host}}/message
