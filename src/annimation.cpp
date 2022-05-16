@@ -12,11 +12,13 @@ AnimatedGIF Annimation::_gif;
 File Annimation::_f;
 int Annimation::x_offset;
 int Annimation::y_offset;
+WebServer *Annimation::_webserver;
 
 
-void Annimation::begin(MatrixPanel_I2S_DMA *dma_display) {
+void Annimation::init(MatrixPanel_I2S_DMA *dma_display, WebServer *webserver) {
   _gif.begin(LITTLE_ENDIAN_PIXELS);
-  Annimation::_dma_display = dma_display;
+  _dma_display = dma_display;
+  _webserver = webserver;
 }
 
 
@@ -72,7 +74,7 @@ void Annimation::GIFDrawFile(GIFDRAW *pDraw) {
         if (iCount) // any opaque pixels?
         {
           for(int xOffset = 0; xOffset < iCount; xOffset++ ){
-            Annimation::_dma_display->drawPixel(x + xOffset, y, usTemp[xOffset]); // 565 Color Format
+            _dma_display->drawPixel(x + xOffset, y, usTemp[xOffset]); // 565 Color Format
           }
           x += iCount;
           iCount = 0;
@@ -100,7 +102,7 @@ void Annimation::GIFDrawFile(GIFDRAW *pDraw) {
       // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
       for (x=0; x<pDraw->iWidth; x++)
       {
-        Annimation::_dma_display->drawPixel(x, y, usPalette[*s++]); // color 565
+        _dma_display->drawPixel(x, y, usPalette[*s++]); // color 565
       }
     }
 } /* GIFDraw() */
@@ -168,8 +170,8 @@ void Annimation::ShowGIF(char *name)
     DEBUG_PRINTLN("Successfully opened GIF");
     while (_gif.playFrame(true, NULL))
     {      
-      Annimation::_dma_display->flipDMABuffer();
-      //server.handleClient();
+      _dma_display->flipDMABuffer();
+      _webserver->handleClient();
       if ( (millis() - start_tick) > 8000) { // we'll get bored after about 8 seconds of the same looping gif
         break;
       }

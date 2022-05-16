@@ -227,7 +227,7 @@ void setup() {
 
   configWebServer();
 
-  Annimation::begin(dma_display);
+  Annimation::init(dma_display, &server);
 
 }
 
@@ -239,7 +239,6 @@ bool scrollMessageCompleted = false;
 void loop() {
   server.handleClient();
   if (message.length() == 0 && newMessage.length() == 0) {
-    sleep(10);
     return;  //Nothing to do
   }
 
@@ -283,14 +282,14 @@ void loop() {
       currentColor = 0;
     
     if (message != newMessage) {
-      message = newMessage;
       //play animation GIF if incomming message is not blank
-      if (message.length() > 0) {
+      if (newMessage.length() > 0) {
         String filename = "/pacman.gif";
         char fileArray[filename.length()+1];
         filename.toCharArray(fileArray,filename.length()+1);
         Annimation::ShowGIF(fileArray);
       }
+      message = newMessage;
 
     }
   }
