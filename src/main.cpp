@@ -138,10 +138,6 @@ void configPanel(){
 
 void configWebServer() {
   
-  // //CORS Header for swagger
-  server.sendHeader("Access-Control-Allow-Origin",  "*");
-  server.sendHeader("Access-Control-Max-Age", "600");
-  server.sendHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
   //setup api
   server.on("/message",HTTP_POST,handlePostMessage);
   server.on("/message", handleGetMessage);
@@ -190,23 +186,8 @@ String connectWiFi() {
       dma_display->print("Failed to connect");
       ESP.restart();
   } 
-  String netbiosName = "sgn" + WiFi.macAddress();
-  netbiosName.replace(":","");
 
-
-   // Print local IP address and start web server
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  
-
-  WiFi.setHostname(netbiosName.c_str());
-  Serial.print("NETBIOS Name: ");
-  Serial.println(netbiosName);
-  NBNS.begin(netbiosName.c_str());
-
-  return WiFi.localIP().toString();;
+  return WiFi.localIP().toString();
   
 
 }
@@ -370,6 +351,7 @@ void ShowGIF(char *name)
     while (gif.playFrame(true, NULL))
     {      
       dma_display->flipDMABuffer();
+      server.handleClient();
       if ( (millis() - start_tick) > 8000) { // we'll get bored after about 8 seconds of the same looping gif
         break;
       }
@@ -399,8 +381,8 @@ void setup() {
   dma_display->setCursor(1,7);
   dma_display->print("Connecting");
 
-  String netboisName  = connectWiFi();
-  message = "http://"+netboisName;
+  String ipaddr  = connectWiFi();
+  message = "http://"+ipaddr;
  
 
   //configure display for scrolling text
@@ -423,10 +405,15 @@ void setup() {
 // Will be used in getTextBounds.
 int16_t xOne, yOne;
 uint16_t w, h;
-bool checkNewMessage = false;
+bool scrollMessageCompleted = false;
 
 void loop() {
-  server.handleClient();	
+  server.handleClient();
+  if (message.length() == 0 && newMessage.length() == 0) {
+    sleep(10);
+    return;  //Nothing to do
+  }
+
   unsigned long now = millis();
   if (now > isAnimationDue)
   {
@@ -439,14 +426,14 @@ void loop() {
     dma_display->getTextBounds(message, textXPosition, textYPosition, &xOne, &yOne, &w, &h);
     if (textXPosition + w <= 0)
     {
-      checkNewMessage = true;
+      scrollMessageCompleted = true;
       textXPosition = dma_display->width();
     }
 
     dma_display->setCursor(textXPosition, textYPosition);
 
     //The display has to do less updating if you only black out the area
-    dma_display->fillRect(0, textYPosition, dma_display->width(), FONT_SIZE * 8, myBLACK);
+    dma_display->fillRect(0, textYPosition, dma_display->width(), FONT_SIZE * 8+6, myBLACK);
     dma_display->print(message);
 
     //This code swaps the second buffer to be visible (puts it on the display)
@@ -455,12 +442,12 @@ void loop() {
 
   //Set new message text if the current message scrolled off screen OR set immediately if current
   //message is empty
-  if (checkNewMessage || (message.length() == 0 && newMessage.length() != 0))
+  if (scrollMessageCompleted|| (message.length() == 0 && newMessage.length() > 0))
   {
     if (message.length() == 0)
       textXPosition = dma_display->width();
 
-    checkNewMessage = false;
+    scrollMessageCompleted = false;
     dma_display->setTextColor(colors[currentColor++]);
     
     if (currentColor >= colorCount-1 ) 
@@ -468,13 +455,12 @@ void loop() {
     
     if (message != newMessage) {
       message = newMessage;
-      play animation GIF if incomming message is not blank
+      //play animation GIF if incomming message is not blank
       if (message.length() > 0) {
         String filename = "/pacman.gif";
         char fileArray[filename.length()+1];
         filename.toCharArray(fileArray,filename.length()+1);
         ShowGIF(fileArray);
-        //dma_display->fillScreen(myBLACK);
       }
 
     }
