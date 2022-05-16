@@ -6,6 +6,7 @@
 
 
 
+//Libraries
 #include <Arduino.h>
 #include <AnimatedGIF.h>
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
@@ -17,7 +18,11 @@
 #include <Fonts/Org_01.h>
 #include <SPIFFS.h>
 
-#define SERIAL_DEBUG 1
+#include "serialDebug.h"
+
+
+
+//#define SERIAL_DEBUG 1
 
 /* Pinout RGB Matrix (6124 chip)
    https://www.amazon.com/dp/B079JSKF21?psc=1&ref=ppx_yo2ov_dt_b_product_details
@@ -94,13 +99,13 @@ uint16_t colors[colorCount] =
 
 
 void handleGetMessage() {
-  Serial.println("Received GET Message");
+  DEBUG_PRINTLN("Received GET Message");
   server.send(200, "text/plain",message);
 
 }
 
 void handlePostMessage() {
-  Serial.println("Received POST Message");
+  DEBUG_PRINTLN("Received POST Message");
   newMessage = server.arg(0);
   server.send(200);
 
@@ -132,7 +137,7 @@ void configPanel(){
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
   dma_display->setBrightness8(90); //0-255
   if( not dma_display->begin() )
-      Serial.println("****** I2S memory allocation failed ***********");
+      DEBUG_PRINTLN("****** I2S memory allocation failed ***********");
   dma_display->clearScreen();
 }
 
@@ -181,7 +186,7 @@ String connectWiFi() {
 
 
   if(!res) {
-      Serial.println("Failed to connect");
+      DEBUG_PRINTLN("Failed to connect");
       dma_display->setCursor(10,1);
       dma_display->print("Failed to connect");
       ESP.restart();
@@ -292,8 +297,8 @@ void * GIFOpenFile(const char *fname, int32_t *pSize)
   f = FILESYSTEM.open(fname);
   if (f)
   {
-    Serial.print("Playing gif: ");
-    Serial.println(fname);
+    DEBUG_PRINT("Playing gif: ");
+    DEBUG_PRINTLN(fname);
     *pSize = f.size();
     return (void *)&f;
   }
@@ -329,7 +334,7 @@ int32_t GIFSeekFile(GIFFILE *pFile, int32_t iPosition)
   f->seek(iPosition);
   pFile->iPos = (int32_t)f->position();
   i = micros() - i;
-  //Serial.printf("Seek time = %d us\n", i);
+  
   return pFile->iPos;
 } /* GIFSeekFile() */
 
@@ -346,8 +351,7 @@ void ShowGIF(char *name)
     if (x_offset < 0) x_offset = 0;
     y_offset = (MATRIX_HEIGHT - gif.getCanvasHeight())/2;
     if (y_offset < 0) y_offset = 0;
-    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(), gif.getCanvasHeight());
-    Serial.flush();
+    DEBUG_PRINTLN("Successfully opened GIF");
     while (gif.playFrame(true, NULL))
     {      
       dma_display->flipDMABuffer();
@@ -368,7 +372,7 @@ void ShowGIF(char *name)
 
 
 void setup() {
-  Serial.begin(115200);
+  DEBUG_INIT
   configPanel();
 
   //init file system
