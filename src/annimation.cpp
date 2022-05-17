@@ -1,4 +1,5 @@
 // Displays an annimated gif on Matrix display
+// based off of driver library examples https://github.com/mrfaptastic/ESP32-HUB75-MatrixPanel-I2S-DMA/tree/master/examples/AnimatedGIFPanel
 
 #include <Arduino.h>
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
@@ -171,6 +172,7 @@ void Annimation::ShowGIF(char *name)
     while (_gif.playFrame(true, NULL))
     {      
       _dma_display->flipDMABuffer();
+      //handle any incomming server requests while the annimation is playing
       _webserver->handleClient();
       if ( (millis() - start_tick) > 8000) { // we'll get bored after about 8 seconds of the same looping gif
         break;
